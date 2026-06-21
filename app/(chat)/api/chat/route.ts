@@ -83,12 +83,20 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
+    if (
+      !entitlementsByUserType[userType].availableChatModelIds.includes(
+        selectedChatModel,
+      )
+    ) {
+      return new ChatSDKError('forbidden:chat').toResponse();
+    }
+
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    if (messageCount >= entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
@@ -237,6 +245,9 @@ export async function POST(request: Request) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
+
+    console.error('Unexpected error in chat POST handler:', error);
+    return new ChatSDKError('bad_request:api').toResponse();
   }
 }
 
@@ -350,6 +361,10 @@ export async function DELETE(request: Request) {
   }
 
   const chat = await getChatById({ id });
+
+  if (!chat) {
+    return new ChatSDKError('not_found:chat').toResponse();
+  }
 
   if (chat.userId !== session.user.id) {
     return new ChatSDKError('forbidden:chat').toResponse();

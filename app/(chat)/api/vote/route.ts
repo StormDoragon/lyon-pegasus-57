@@ -49,6 +49,13 @@ export async function PATCH(request: Request) {
     ).toResponse();
   }
 
+  if (type !== 'up' && type !== 'down') {
+    return new ChatSDKError(
+      'bad_request:api',
+      "Parameter type must be either 'up' or 'down'.",
+    ).toResponse();
+  }
+
   const session = await auth();
 
   if (!session?.user) {

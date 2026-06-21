@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user) {
-    return new ChatSDKError('not_found:document').toResponse();
+    return new ChatSDKError('unauthorized:document').toResponse();
   }
 
   const {
@@ -112,6 +112,10 @@ export async function DELETE(request: Request) {
   const documents = await getDocumentsById({ id });
 
   const [document] = documents;
+
+  if (!document) {
+    return new ChatSDKError('not_found:document').toResponse();
+  }
 
   if (document.userId !== session.user.id) {
     return new ChatSDKError('forbidden:document').toResponse();
