@@ -20,7 +20,7 @@ const FileSchema = z.object({
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -46,13 +46,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get('file') as File).name;
+    // Get filename from formData since Blob doesn't have name property.
+    // Strip any path components to avoid using attacker-controlled paths.
+    const rawName = (formData.get('file') as File).name || 'upload';
+    const filename = rawName.split(/[\\/]/).pop() || 'upload';
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await put(`${filename}`, fileBuffer, {
+      // `addRandomSuffix` ensures uploads can't overwrite each other's blobs
+      // when two users (or one user twice) upload files with the same name.
+      const data = await put(filename, fileBuffer, {
         access: 'public',
+        addRandomSuffix: true,
       });
 
       return NextResponse.json(data);

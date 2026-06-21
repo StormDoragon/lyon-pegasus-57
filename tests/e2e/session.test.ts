@@ -1,3 +1,4 @@
+import type { Request } from '@playwright/test';
 import { expect, test } from '../fixtures';
 import { AuthPage } from '../pages/auth';
 import { generateRandomTestUser } from '../helpers';
@@ -15,7 +16,7 @@ test.describe
         throw new Error('Failed to load page');
       }
 
-      let request = response.request();
+      let request: Request | null = response.request();
 
       const chain = [];
 
@@ -57,7 +58,7 @@ test.describe
         throw new Error('Failed to load page');
       }
 
-      let request = response.request();
+      let request: Request | null = response.request();
 
       const chain = [];
 
@@ -195,7 +196,7 @@ test.describe('Entitlements', () => {
   test('Guest user cannot send more than 20 messages/day', async () => {
     await chatPage.createNewChat();
 
-    for (let i = 0; i <= 20; i++) {
+    for (let i = 0; i < 20; i++) {
       await chatPage.sendUserMessage('Why is the sky blue?');
       await chatPage.isGenerationComplete();
     }
